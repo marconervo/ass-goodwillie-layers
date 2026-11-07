@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Adams SS for the Goodwillie layers of spheres</title>
+  <meta name="description" content="Compute Adams E2 pages for the Goodwillie layers of spheres using ext-rs: all nonnegative dimensions at prime 2, and odd dimensions at odd primes.">
+  <link rel="stylesheet" href="style.css"><link rel="stylesheet" href="vendor/katex/katex.min.css">
+  <script defer src="vendor/katex/katex.min.js"></script>
+  <script defer src="vendor/katex/auto-render.min.js"></script>
+  <script defer src="math.js"></script>
+  <script type="module" src="app.js"></script>
+</head>
+<body><main>
+  <header><h1>Adams SS for the Goodwillie layers of spheres</h1></header>
+  <section class="notes">
+    <p>This tool computes Adams \(E_2\)-pages for the \(p\)-local Goodwillie layers \(\mathbb{D}_{p^k}I(S^n)\), for a given sphere dimension \(n\), prime \(p\), and requested range. At \(p=2\), all dimensions are supported; at odd primes, the dimension must be odd.</p>
+    <details class="explanation"><summary>Mathematical explanation</summary>
+      <p>The Goodwillie tower of the identity gives a filtration of the \(n\)-sphere whose successive fibers are infinite loop spaces of the form \(\Omega^\infty\mathbb{D}_{m}I(S^n)\), for certain spectra \(\mathbb{D}_{m}I(S^n)\). </p>
+      <p>Arone and Mahowald [AM99, Theorem 3.17] proved that, after \(p\)-localization, these layers vanish unless \(m=p^k\): this holds for every \(n\) when \(p=2\), and for \(n\) odd when \(p\) is odd. The first two non-trivial layers are the sphere spectrum and a stunted symmetric-group spectrum. More explicitly,</p>
+      \[\mathbb{D}_{1}I(S^n)\simeq\mathbb{S}^{n},\qquad
+      \mathbb{D}_{p}I(S^n)\simeq\Sigma^{n-1}\Sigma^\infty\!B\Sigma_p/B\Sigma_p^{(p-1)(n-1)}\]
+      <p>Arone and Mahowald [AM99, Theorem 3.17] also computed the mod-\(p\) cohomology of these layers as modules over the Steenrod algebra.</p>
+      <p>At the prime \(2\), their result is</p>
+      \[H^*\!\left(\mathbb{D}_{2^k}I(S^n);\mathbb F_2\right)\cong \Sigma^{n-2k}\mathcal A_{=k}^{\geq n+1}.\]
+      <p>A basis is given by admissible square words \(Sq^{i_1}\cdots Sq^{i_k}\), where \(i_j\geq2i_{j+1}\) and \(i_k\geq n+1\). The \(\mathcal A\)-module structure is computed by left multiplication, followed by reduction using the Adem relations and projection onto words of length exactly \(k\).</p>
+      <p>At an odd prime, for odd \(n\), the corresponding statement is</p>
+      \[H^*\!\left(\mathbb{D}_{p^k}I(S^n);\mathbb F_p\right)\cong \Sigma^{n-2k}(\mathcal A/\mathcal A\beta)_{=k}^{\geq(n+1)/2}.\]
+      <p>A basis is given by admissible words \(\beta^{\epsilon_1}P^{i_1}\cdots\beta^{\epsilon_k}P^{i_k}\), where \(i_k\geq(n+1)/2\) and \(i_j\geq p i_{j+1}+\epsilon_{j+1}\). Again, the \(\mathcal A\)-module structure is left multiplication, reduced by the Adem relations and projected onto words of length exactly \(k\).</p>
+      <p>The calculator approximates these modules by finite truncations and passes them to <em>ext-rs</em> [CCB] to calculate \(\operatorname{Ext}_{\mathcal A}^{s,t}\). The module is shifted so that its bottom degree is zero before the calculation, and the corresponding shift is restored in the chart. The horizontal axis is the homotopy degree \(t-s\), and the vertical axis is Adams filtration.</p>
+      <p>By [Ner26, Proposition 1.2.5], the connectivity of the layer is</p>
+      \[\operatorname{conn}\! \ \mathbb{D}_{p^k}I(S^n) =(n+1)p^k-2k-1.\]
+      <p>The calculator therefore includes precisely those layers for which this number does not exceed the requested range.</p>
+      <p>Differentials and hidden extensions are not computed.</p>
+      <div class="references"><h2>References</h2>
+        <dl>
+          <dt>[AM99]</dt>
+          <dd>Greg Arone and Mark Mahowald. <em>The Goodwillie tower of the identity functor and the unstable periodic homotopy of spheres.</em> Inventiones Mathematicae <strong>135</strong> (1999)</dd>
+          <dt>[CCB]</dt>
+          <dd>Hood Chatham, Dexter Chua, and Joey Beauvais-Feisthauer. <em>The Spectral Sequences Project</em>, <em>ext</em>/<em>ext-rs</em> resolution software. Repository: SpectralSequences/sseq.</dd>
+          <dt>[Ner26]</dt>
+          <dd>Marco Nervo. <em>An abelian model for the Goodwillie tower of the circle.</em> Preprint, 2026. arXiv:2609.31269.</dd>
+        </dl>
+      </div>
+    </details>
+  </section>
+  <section class="panel controls" aria-label="Computation settings">
+    <form id="settings">
+      <label>Dimension<input id="dimension" type="number" min="0" step="1" value="3" required></label>
+      <label>Prime<input id="prime" type="number" min="2" step="1" value="2" required></label>
+      <label>Max. range<input id="range" type="number" min="0" step="1" value="20" required></label>
+      <label>Max. filtration<input id="filtration" type="number" min="0" step="1" value="15" required></label>
+      <button id="compute" type="submit">Compute</button>
+      <button id="stop" class="secondary" type="button" hidden>Stop</button>
+    </form>
+  </section>
+  <p id="status" role="status" aria-live="polite" hidden></p>
+  <div id="layers"></div>
+</main></body>
+</html>

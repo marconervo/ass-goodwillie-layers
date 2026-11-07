@@ -1,0 +1,41 @@
+:root { color-scheme: light; font-family: system-ui, sans-serif; color: #20312e; background: #f6f7f3; --accent: #176b5c; }
+* { box-sizing: border-box; }
+body { margin: 0; }
+main { max-width: 1160px; margin: auto; padding: 42px 28px 24px; }
+header { margin-bottom: 20px; }
+h1 { font-family: Georgia, serif; font-size: clamp(28px, 4vw, 40px); font-weight: 400; margin: 12px 0; letter-spacing: -.02em; }
+.panel { background: white; border: 1px solid #dbe2dc; border-radius: 10px; margin-bottom: 18px; }
+.controls, .output { padding: 22px; }
+form, .legend, .downloads { display: flex; gap: 16px; align-items: end; flex-wrap: wrap; }
+label { font-size: 13px; font-weight: 500; display: grid; gap: 7px; }
+input[type=number] { width: 145px; border: 1px solid #bccbc2; border-radius: 5px; padding: 9px 12px; background: white; color: inherit; font: inherit; min-height: 40px; }
+button { border: 1px solid var(--accent); border-radius: 5px; background: var(--accent); color: white; min-height: 40px; padding: 9px 17px; font: 500 13px system-ui; cursor: pointer; }
+button:hover:not(:disabled) { filter: brightness(.92); }
+button.secondary { color: #324e45; background: #fff; border-color: #bccbc2; }
+button:disabled { opacity: .5; cursor: default; }
+[hidden] { display: none !important; }
+:focus-visible { outline: 3px solid #db9c45; outline-offset: 3px; }
+#status { color: #62716a; font-size: 12px; line-height: 1.6; margin: 0 0 15px; }
+#status.error { color: #aa3328; }
+.legend { align-items: center; margin: 0 0 17px; font-size: 12px; color: #64716a; gap: 19px; }
+.legend label { display: flex; align-items: center; gap: 5px; }
+.chart { overflow-x: auto; border: 1px solid #edf0ec; border-radius: 4px; min-height: 215px; }
+.chart svg { display: block; max-width: none; }
+.empty { padding: 100px 12px; text-align: center; color: #708077; font-family: Georgia, serif; font-size: 20px; }
+.downloads { margin-top: 18px; gap: 9px; }
+.notes { max-width: 960px; margin: 0 auto 36px; font: 17px/1.8 Georgia, serif; }
+.notes p { margin: 0 0 20px; text-align: justify; hyphens: auto; }
+.explanation summary { cursor: pointer; color: var(--accent); font: 500 14px/1.6 system-ui, sans-serif; }
+.explanation[open] summary { margin-bottom: 20px; }
+.notes .katex { font-size: 1.04em; }
+.notes .katex-display { margin: 22px 0; overflow-x: auto; overflow-y: hidden; padding: 4px 0; }
+.references { margin-top: 28px; padding-top: 18px; border-top: 1px solid #dbe2dc; font-size: 13px; line-height: 1.65; color: #52625a; }
+.references h2 { margin: 0 0 12px; font: 500 13px system-ui, sans-serif; color: #20312e; }
+.references dl { display: grid; grid-template-columns: max-content 1fr; gap: 10px 16px; margin: 0; }
+.references dt { font-variant-numeric: lining-nums; }
+.references dd { margin: 0; }
+@media(max-width: 600px) { main { padding: 24px 14px; }.controls,.output { padding: 15px; } form { gap: 12px; } input[type=number] { width: 120px; }.legend { gap: 12px; } }
+@media(max-width: 600px) { .notes { font-size: 16px; line-height: 1.75; }.notes .katex-display { font-size: .92em; }.references dl { gap: 10px; } }
+
+.layer-title { font: normal 24px Georgia,serif; margin: 0 0 20px; }
+.layer-title sup, .layer-title sub { font-size: .65em; }
