@@ -38,7 +38,7 @@ export function productControls(prime, redraw) {
 }
 
 export function drawChart(container, result, legend) {
-  const { n, prime, k, range, filtration, bottom, classes, products } = result;
+  const { n, m, prime, k, range, filtration, bottom, classes, products } = result;
   // Negative-connectivity layers need a negative left endpoint. The resolver
   // still works in shifted stem coordinates; only the chart uses actual q=t-s.
   const rangeStart = Math.min(0, bottom);
@@ -55,7 +55,9 @@ export function drawChart(container, result, legend) {
     height,
     viewBox: `0 0 ${width} ${height}`,
     role: 'img',
-    'aria-label': `Adams E2 for layer ${prime}^${k} of S^${n}, homotopy degree ${rangeStart} to ${range}, filtration 0 to ${filtration}`
+    'aria-label': m === null
+      ? 'Adams E2 for layer ' + prime + '^' + k + ' of S^' + n + ', homotopy degree ' + rangeStart + ' to ' + range + ', filtration 0 to ' + filtration
+      : 'Adams E2 for the fiber of the layer map ' + prime + '^' + k + ' from S^' + n + ' to Sigma^(' + (n - m) + ')S^' + m + ', homotopy degree ' + rangeStart + ' to ' + range + ', filtration 0 to ' + filtration
   };
   for (const [key, value] of Object.entries(attributes)) svg.setAttribute(key, value);
 

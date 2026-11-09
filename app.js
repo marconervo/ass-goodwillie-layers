@@ -73,6 +73,9 @@ function getSettings() {
 }
 
 function createResult(settings, k) {
+  const description = settings.m === null
+    ? 'Ext of the spectral model of D_(p^k)I(S^n); q=t-s. Differentials and hidden extensions are not computed.'
+    : 'Ext of the spectral model of the fiber of D_(p^k)I(S^n) -> Sigma^(n-m)D_(p^k)I(S^m); q=t-s. Differentials and hidden extensions are not computed.';
   return {
     format: 1,
     page: 2,
@@ -80,7 +83,7 @@ function createResult(settings, k) {
     k,
     bottom: bottomDegree(settings.n, settings.prime, k),
     complete: false,
-    description: 'Ext of the spectral model of D_(p^k)I(S^n); q=t-s. Differentials and hidden extensions are not computed.',
+    description,
     engine: 'ext-rs; see vendor/NOTICE.md',
     module: null,
     classes: [],
@@ -211,10 +214,11 @@ $('settings').addEventListener('submit', event => {
 
     const finalLayer = lastLayer(settings.n, settings.prime, settings.range);
     const firstLayer = settings.m === null ? 0 : 1;
-    layers = Array.from(
+    const selectedLayers = Array.from(
       { length: Math.max(0, finalLayer - firstLayer + 1) },
-      (_, index) => createLayer(settings, index + firstLayer)
-    );
+      (_, index) => index + firstLayer
+    ).filter(k => bottomDegree(settings.n, settings.prime, k) <= settings.range);
+    layers = selectedLayers.map(k => createLayer(settings, k));
     currentLayer = -1;
     setBusy(true);
     processNextLayer();

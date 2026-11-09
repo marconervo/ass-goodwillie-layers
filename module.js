@@ -150,6 +150,13 @@ function buildActions(basis, prime, cutoff) {
 export function layerModule(n, prime, k, cutoff, m = null) {
   const bottom = bottomDegree(n, prime, k);
   if (k === 0) {
+    if (m !== null) {
+      return {
+        module: { p: prime, type: 'finite dimensional module', gens: {}, actions: [] },
+        bottom,
+        basis: []
+      };
+    }
     return {
       module: { p: prime, type: 'finite dimensional module', gens: { unit: 0 }, actions: [] },
       bottom,
