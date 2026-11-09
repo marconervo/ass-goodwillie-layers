@@ -4,12 +4,12 @@ importScripts('./vendor/sseq_gui_wasm.js');
 
 self.onmessage = async ({ data }) => {
   try {
-    const { n, prime, k, range, filtration } = data;
+    const { n, m, prime, k, range, filtration } = data;
     const { bottomDegree, layerModule } = await import('./module.js');
     const bottom = bottomDegree(n, prime, k);
     const stem = range - bottom;
     const cutoff = Math.max(0, stem + filtration + 1);
-    const input = layerModule(n, prime, k, cutoff);
+    const input = layerModule(n, prime, k, cutoff, m);
     self.postMessage({ input: { ...input, cutoff } });
 
     // If the layer starts above the requested range, its module is still useful

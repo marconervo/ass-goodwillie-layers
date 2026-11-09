@@ -2,15 +2,35 @@ import { bottomDegree, lastLayer, validateInputs } from './module.js';
 import { drawChart, productControls } from './chart.js';
 
 const $ = id => document.getElementById(id);
-const formControlIds = ['dimension', 'prime', 'range', 'filtration', 'compute'];
+const formControlIds = ['dimension', 'target-dimension', 'lock-difference', 'prime', 'range', 'filtration', 'compute'];
 
 let activeWorker = null;
 let layers = [];
 let currentLayer = -1;
+let busy = false;
+let lockedDifference = null;
 
 function setBusy(isBusy) {
+  busy = isBusy;
   for (const id of formControlIds) $(id).disabled = isBusy;
+  syncDimensionLockControls();
   $('stop').hidden = !isBusy;
+}
+
+function syncDimensionLockControls() {
+  const target = $('target-dimension');
+  const lock = $('lock-difference');
+  const locked = lockedDifference !== null;
+  const sourceValue = Number($('dimension').value);
+  const targetValue = Number(target.value);
+  const canLock = Number.isSafeInteger(sourceValue)
+    && Number.isSafeInteger(targetValue)
+    && targetValue > sourceValue;
+  target.disabled = busy || locked;
+  lock.disabled = busy || (!locked && !canLock);
+  lock.setAttribute('aria-pressed', String(locked));
+  lock.textContent = locked ? '🔓' : '🔒';
+  lock.setAttribute('aria-label', locked ? 'Unlock the difference m−n' : 'Lock the difference m−n');
 }
 
 function setStatus(message = '', isError = false) {
@@ -18,6 +38,18 @@ function setStatus(message = '', isError = false) {
   element.textContent = message;
   element.hidden = !message;
   element.classList.toggle('error', isError);
+}
+
+function setCalculationDescription(settings) {
+  const description = $('calculation-description');
+  const sourceSphere = `S^${settings.n}`;
+  description.textContent = settings.m === null
+    ? `These are the Goodwillie layers of \\(${sourceSphere}\\) at the prime ${settings.prime}.`
+    : `These are the Goodwillie layers of the suspension map \\(${sourceSphere} \\to ${settings.m - settings.n === 1 ? '\\Omega ' : `\\Omega^{${settings.m - settings.n}}`}S^${settings.m}\\) at the prime ${settings.prime}.`;
+  renderMathInElement(description, {
+    delimiters: [{ left: '\\(', right: '\\)', display: false }],
+    throwOnError: true
+  });
 }
 
 function downloadFile(filename, contents, type) {
@@ -30,8 +62,10 @@ function downloadFile(filename, contents, type) {
 }
 
 function getSettings() {
+  const targetValue = $('target-dimension').value.trim();
   return {
     n: Number($('dimension').value),
+    m: targetValue === '' ? null : Number(targetValue),
     prime: Number($('prime').value),
     range: Number($('range').value),
     filtration: Number($('filtration').value)
@@ -85,7 +119,8 @@ function createLayer(settings, k) {
   };
   const legend = productControls(settings.prime, redraw);
 
-  const filenamePrefix = `layers-n${settings.n}-p${settings.prime}-k${k}-R${settings.range}-s${settings.filtration}`;
+  const targetSuffix = settings.m === null ? '' : `-m${settings.m}`;
+  const filenamePrefix = `layers-n${settings.n}${targetSuffix}-p${settings.prime}-k${k}-R${settings.range}-s${settings.filtration}`;
   const downloads = document.createElement('div');
   downloads.className = 'downloads';
   const buttons = [
@@ -168,19 +203,45 @@ $('settings').addEventListener('submit', event => {
   const settings = getSettings();
 
   try {
-    validateInputs(settings.n, settings.prime, settings.range, settings.filtration);
+    validateInputs(settings.n, settings.prime, settings.range, settings.filtration, settings.m);
     activeWorker?.terminate();
     $('layers').replaceChildren();
+    setCalculationDescription(settings);
     setStatus();
 
     const finalLayer = lastLayer(settings.n, settings.prime, settings.range);
-    layers = Array.from({ length: finalLayer + 1 }, (_, k) => createLayer(settings, k));
+    const firstLayer = settings.m === null ? 0 : 1;
+    layers = Array.from(
+      { length: Math.max(0, finalLayer - firstLayer + 1) },
+      (_, index) => createLayer(settings, index + firstLayer)
+    );
     currentLayer = -1;
     setBusy(true);
     processNextLayer();
   } catch (error) {
     setStatus(error.message, true);
   }
+});
+
+$('lock-difference').addEventListener('click', () => {
+  if (lockedDifference === null) {
+    const source = Number($('dimension').value);
+    const target = Number($('target-dimension').value);
+    if (!Number.isSafeInteger(source) || !Number.isSafeInteger(target)) return;
+    lockedDifference = target - source;
+  } else {
+    lockedDifference = null;
+  }
+  syncDimensionLockControls();
+});
+
+$('target-dimension').addEventListener('input', syncDimensionLockControls);
+$('dimension').addEventListener('input', () => {
+  if (lockedDifference !== null) {
+    const source = Number($('dimension').value);
+    if (Number.isSafeInteger(source)) $('target-dimension').value = String(source + lockedDifference);
+  }
+  syncDimensionLockControls();
 });
 
 $('stop').addEventListener('click', () => {
@@ -194,4 +255,5 @@ $('stop').addEventListener('click', () => {
 });
 
 window.addEventListener('resize', () => layers.forEach(layer => layer.redraw()));
+syncDimensionLockControls();
 $('settings').requestSubmit();

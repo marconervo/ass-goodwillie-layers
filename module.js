@@ -2,8 +2,9 @@ import { ademReducer } from './steenrod.js';
 
 const MAX_ENGINE_DEGREE = 2_147_483_646;
 
-export function validateInputs(n, prime, range, filtration) {
-  if (![n, prime, range, filtration].every(Number.isSafeInteger)) {
+export function validateInputs(n, prime, range, filtration, m = null) {
+  if (![n, prime, range, filtration].every(Number.isSafeInteger)
+    || (m !== null && !Number.isSafeInteger(m))) {
     throw Error('Enter whole numbers.');
   }
   if (n < 0) throw Error('Sphere dimension must be a nonnegative integer.');
@@ -14,6 +15,12 @@ export function validateInputs(n, prime, range, filtration) {
   if (!isPrime(prime)) throw Error('The chosen prime is not prime.');
   if (prime !== 2 && n % 2 === 0) {
     throw Error('Even sphere dimensions are supported only at prime 2. Choose prime 2 or an odd dimension.');
+  }
+  if (m !== null) {
+    if (m <= n) throw Error('The target dimension must be strictly larger than the source dimension.');
+    if (prime !== 2 && m % 2 === 0) {
+      throw Error('Even target dimensions are supported only at prime 2. Choose prime 2 or an odd target dimension.');
+    }
   }
   if (range + filtration + n > MAX_ENGINE_DEGREE) {
     throw Error('These degrees exceed the resolution engine’s integer range.');
@@ -46,7 +53,7 @@ export function bottomDegree(n, prime, k) {
   return k === 0 ? n : (n + 1) * prime ** k - 2 * k - 1;
 }
 
-function enumerateBasis(n, prime, k, maximum) {
+function enumerateBasis(n, prime, k, maximum, targetDimension) {
   const basis = [];
 
   function add(word, degree) {
@@ -63,7 +70,8 @@ function enumerateBasis(n, prime, k, maximum) {
     const first = length ? 2 * word[0] : n + 1;
     // The smallest possible remaining word has exponents a, 2a, ..., 2^(r-1)a.
     const minimumWeight = 2 ** remaining - 1;
-    for (let exponent = first; degree + minimumWeight * exponent <= maximum; exponent++) {
+    const upperExponent = length ? Infinity : targetDimension ?? Infinity;
+    for (let exponent = first; exponent <= upperExponent && degree + minimumWeight * exponent <= maximum; exponent++) {
       enumerateSquares([exponent, ...word], degree + exponent);
     }
   }
@@ -82,7 +90,8 @@ function enumerateBasis(n, prime, k, maximum) {
     const minimumWeight = (prime ** remaining - 1) / (prime - 1);
     const powerDegree = 2 * (prime - 1);
 
-    for (let exponent = first; degree + powerDegree * minimumWeight * exponent <= maximum; exponent++) {
+    const upperExponent = length ? Infinity : targetDimension ?? Infinity;
+    for (let exponent = first; exponent <= upperExponent && degree + powerDegree * minimumWeight * exponent <= maximum; exponent++) {
       for (let beta = 0; beta <= 1; beta++) {
         const nextDegree = degree + powerDegree * exponent + beta;
         if (nextDegree <= maximum) {
@@ -138,7 +147,7 @@ function buildActions(basis, prime, cutoff) {
  * The module is translated so its bottom degree is zero. `bottom` is returned
  * separately so the UI can put the Ext classes back in their original degrees.
  */
-export function layerModule(n, prime, k, cutoff) {
+export function layerModule(n, prime, k, cutoff, m = null) {
   const bottom = bottomDegree(n, prime, k);
   if (k === 0) {
     return {
@@ -150,7 +159,8 @@ export function layerModule(n, prime, k, cutoff) {
 
   const shift = n - 2 * k;
   const maximum = cutoff + bottom - shift;
-  const basis = enumerateBasis(n, prime, k, maximum);
+  const targetExponent = m === null ? null : (prime === 2 ? m : (m - 1) / 2);
+  const basis = enumerateBasis(n, prime, k, maximum, targetExponent);
   basis.sort((a, b) => a.degree - b.degree || a.word.join(',').localeCompare(b.word.join(',')));
   basis.forEach((entry, index) => {
     entry.name = `x${index}`;
