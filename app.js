@@ -2,7 +2,7 @@ import { bottomDegree, lastLayer, validateInputs } from './module.js';
 import { drawChart, productControls } from './chart.js';
 
 const $ = id => document.getElementById(id);
-const formControlIds = ['dimension', 'target-dimension', 'lock-difference', 'prime', 'range', 'filtration', 'compute'];
+const formControlIds = ['dimension', 'target-dimension', 'lock-difference', 'prime', 'range', 'filtration', 'compute', 'download-all'];
 
 let activeWorker = null;
 let layers = [];
@@ -59,6 +59,104 @@ function downloadFile(filename, contents, type) {
   link.download = filename;
   link.click();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+function calculationTitle(settings) {
+  const sourceSphere = `S^${settings.n}`;
+  return settings.m === null
+    ? `Goodwillie layers of ${sourceSphere} at the prime ${settings.prime}`
+    : `Goodwillie layers of the suspension map ${sourceSphere} -> ${settings.m - settings.n === 1 ? 'Omega ' : `Omega^${settings.m - settings.n}`}S^${settings.m} at the prime ${settings.prime}`;
+}
+
+function combinedChartSvg(settings) {
+  const svgs = layers.map(layer => layer.chart.querySelector('svg'));
+  const margin = 24;
+  const titleHeight = 52;
+  const headingHeight = 30;
+  const gap = 24;
+  const width = Math.max(...svgs.map(svg => Number(svg.getAttribute('width'))), 320) + margin * 2;
+  const height = titleHeight + layers.reduce((total, layer, index) => {
+    const svg = svgs[index];
+    return total + headingHeight + Number(svg.getAttribute('height')) + gap;
+  }, margin);
+  const namespace = 'http://www.w3.org/2000/svg';
+  const combined = document.createElementNS(namespace, 'svg');
+  combined.setAttribute('xmlns', namespace);
+  combined.setAttribute('width', width);
+  combined.setAttribute('height', height);
+  combined.setAttribute('viewBox', `0 0 ${width} ${height}`);
+  combined.setAttribute('role', 'img');
+  combined.setAttribute('aria-label', calculationTitle(settings));
+
+  const addText = (text, attributes) => {
+    const node = document.createElementNS(namespace, 'text');
+    Object.entries(attributes).forEach(([name, value]) => node.setAttribute(name, value));
+    node.textContent = text;
+    combined.append(node);
+    return node;
+  };
+
+  const addTitle = () => {
+    const title = document.createElementNS(namespace, 'text');
+    title.setAttribute('x', width / 2);
+    title.setAttribute('y', 32);
+    title.setAttribute('text-anchor', 'middle');
+    title.setAttribute('font-family', 'Georgia,serif');
+    title.setAttribute('font-size', 20);
+    title.setAttribute('fill', '#20312e');
+
+    const append = (text, attributes = {}) => {
+      const part = document.createElementNS(namespace, 'tspan');
+      Object.entries(attributes).forEach(([name, value]) => part.setAttribute(name, value));
+      part.textContent = text;
+      title.append(part);
+    };
+    const appendPower = (base, exponent) => {
+      append(base);
+      append(exponent, { 'font-size': '70%', 'baseline-shift': 'super' });
+    };
+
+    append(settings.m === null ? 'Goodwillie layers of ' : 'Goodwillie layers of the suspension map ');
+    appendPower('S', settings.n);
+    if (settings.m === null) {
+      append(` at the prime ${settings.prime}`);
+    } else {
+      append(' → ');
+      if (settings.m - settings.n === 1) append('Ω');
+      else appendPower('Ω', settings.m - settings.n);
+      appendPower('S', settings.m);
+      append(` at the prime ${settings.prime}`);
+    }
+    combined.append(title);
+  };
+
+  addTitle();
+
+  let y = titleHeight + margin;
+  layers.forEach((layer, index) => {
+    const source = svgs[index];
+    const chartWidth = Number(source.getAttribute('width'));
+    const chartHeight = Number(source.getAttribute('height'));
+    addText(`k = ${layer.result.k}`, {
+      x: width / 2,
+      y: y + 21,
+      'text-anchor': 'middle',
+      'font-family': 'Georgia,serif',
+      'font-size': 17,
+      fill: '#20312e'
+    });
+    const group = document.createElementNS(namespace, 'g');
+    group.setAttribute('transform', `translate(${(width - chartWidth) / 2}, ${y + headingHeight})`);
+    Array.from(source.childNodes).forEach(node => group.append(node.cloneNode(true)));
+    combined.append(group);
+    y += headingHeight + chartHeight + gap;
+  });
+
+  return new XMLSerializer().serializeToString(combined);
+}
+
+function updateDownloadAllButton() {
+  $('download-all').disabled = busy || layers.length === 0 || !layers.every(layer => layer.result.complete);
 }
 
 function getSettings() {
@@ -142,6 +240,7 @@ function finishLayer(layer) {
   layer.result.complete = true;
   for (const button of layer.buttons) button.disabled = false;
   layer.redraw();
+  updateDownloadAllButton();
   processNextLayer();
 }
 
@@ -186,6 +285,7 @@ function processNextLayer() {
 
   if (currentLayer === layers.length) {
     setBusy(false);
+    updateDownloadAllButton();
     setStatus();
     return;
   }
@@ -256,6 +356,14 @@ $('stop').addEventListener('click', () => {
     if (!layer.result.complete) layer.message.textContent = 'Stopped. Compute again to restart.';
   }
   setStatus('Stopped. Completed layers remain available.');
+  updateDownloadAllButton();
+});
+
+$('download-all').addEventListener('click', () => {
+  const settings = getSettings();
+  const targetSuffix = settings.m === null ? '' : `-m${settings.m}`;
+  const filename = `goodwillie-layers-n${settings.n}${targetSuffix}-p${settings.prime}.svg`;
+  downloadFile(filename, combinedChartSvg(settings), 'image/svg+xml');
 });
 
 window.addEventListener('resize', () => layers.forEach(layer => layer.redraw()));
