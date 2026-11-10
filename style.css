@@ -29,7 +29,7 @@ button:disabled { opacity: .5; cursor: default; }
 .chart svg { display: block; max-width: none; }
 .empty { padding: 100px 12px; text-align: center; color: #708077; font-family: Georgia, serif; font-size: 20px; }
 .downloads { margin-top: 18px; gap: 9px; }
-.calculation-actions { display: flex; justify-content: flex-end; margin: -2px 0 18px; }
+.calculation-actions { display: flex; justify-content: flex-end; gap: 9px; flex-shrink: 0; }
 .notes { max-width: 960px; margin: 0 auto 36px; font: 17px/1.8 Georgia, serif; }
 .notes p { margin: 0 0 20px; text-align: justify; hyphens: auto; }
 .explanation summary { cursor: pointer; color: var(--accent); font: 500 14px/1.6 system-ui, sans-serif; }
@@ -43,7 +43,7 @@ button:disabled { opacity: .5; cursor: default; }
 .references dd { margin: 0; }
 @media(max-width: 600px) { main { padding: 24px 14px; }.controls,.output { padding: 15px; } form { gap: 12px; } input[type=number] { width: 120px; }.legend { gap: 12px; } }
 @media(max-width: 600px) { .notes { font-size: 16px; line-height: 1.75; }.notes .katex-display { font-size: .92em; }.references dl { gap: 10px; } }
-@media(max-width: 600px) { .calculation-summary { align-items: stretch; flex-direction: column; gap: 10px; }.calculation-summary #download-all { align-self: flex-end; } }
+@media(max-width: 600px) { .calculation-summary { align-items: stretch; flex-direction: column; gap: 10px; }.calculation-actions { align-self: flex-end; } }
 
 .layer-title { font: normal 24px Georgia,serif; margin: 0 0 20px; }
 .layer-title sup, .layer-title sub { font-size: .65em; }

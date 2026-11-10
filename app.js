@@ -170,6 +170,28 @@ function getSettings() {
   };
 }
 
+function updatePermalink(settings) {
+  const params = new URLSearchParams({
+    n: String(settings.n),
+    p: String(settings.prime),
+    r: String(settings.range),
+    s: String(settings.filtration)
+  });
+  if (settings.m !== null) params.set('m', String(settings.m));
+  const query = params.toString();
+  history.replaceState(null, '', `${location.pathname}?${query}${location.hash}`);
+}
+
+function loadPermalink() {
+  const params = new URLSearchParams(location.search);
+  if (!['n', 'm', 'p', 'r', 's'].some(key => params.has(key))) return;
+  if (params.has('n')) $('dimension').value = params.get('n');
+  $('target-dimension').value = params.get('m') ?? '';
+  if (params.has('p')) $('prime').value = params.get('p');
+  if (params.has('r')) $('range').value = params.get('r');
+  if (params.has('s')) $('filtration').value = params.get('s');
+}
+
 function createResult(settings, k) {
   const description = settings.m === null
     ? 'Ext of the spectral model of D_(p^k)I(S^n); q=t-s. Differentials and hidden extensions are not computed.'
@@ -307,6 +329,7 @@ $('settings').addEventListener('submit', event => {
 
   try {
     validateInputs(settings.n, settings.prime, settings.range, settings.filtration, settings.m);
+    updatePermalink(settings);
     activeWorker?.terminate();
     $('layers').replaceChildren();
     setCalculationDescription(settings);
@@ -367,5 +390,6 @@ $('download-all').addEventListener('click', () => {
 });
 
 window.addEventListener('resize', () => layers.forEach(layer => layer.redraw()));
+loadPermalink();
 syncDimensionLockControls();
 $('settings').requestSubmit();
